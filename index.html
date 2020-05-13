@@ -145,6 +145,253 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/14/redis/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="JIE HE">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Stephen-Hjay">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/05/14/redis/" class="post-title-link" itemprop="url">redis|Redis概念与Jedis链接</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-05-14 02:03:31 / Modified: 02:12:47" itemprop="dateCreated datePublished" datetime="2020-05-14T02:03:31+08:00">2020-05-14</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Redis-运行在内存的Key-Value数据库"><a href="#Redis-运行在内存的Key-Value数据库" class="headerlink" title="Redis 运行在内存的Key-Value数据库"></a>Redis 运行在内存的Key-Value数据库</h2><h3 id="redis是一款高性能的NOSQL系列的非关系型数据库"><a href="#redis是一款高性能的NOSQL系列的非关系型数据库" class="headerlink" title="redis是一款高性能的NOSQL系列的非关系型数据库"></a>redis是一款高性能的NOSQL系列的非关系型数据库</h3><p>1.1.什么是NOSQL<br>        NoSQL(NoSQL = Not Only SQL)，意即“不仅仅是SQL”，是一项全新的数据库理念，泛指非关系型的数据库。<br>        互联网web2.0网站(不再是静态网页，很多时候是由用户负责产生内容，如果频繁的和服务器的硬盘数据库进行交互就会性能低下)，传统的关系数据库在应付web2.0网站，特别是超大规模和高并发的SNS类型的web2.0纯动态网站已经显得力不从心。</p>
+<p>​        NoSQL数据库的产生就是为了解决大规模数据集合多重数据种类带来的挑战，尤其是大数据应用难题。<img src="/images/%E5%85%B3%E7%B3%BB%E5%9E%8B%E5%92%8C%E9%9D%9E%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93%E6%AF%94%E8%BE%83.bmp" alt="关系型和非关系型数据库比较"></p>
+<p>关系型数据库：1、数据之间有耦合关系 2、数据存储在硬盘文件中</p>
+<p>非关系型数据库：1、数据之间没有耦合 2、数据在内存中</p>
+<h3 id="通过缓存的思想解决数据库操作频繁问题"><a href="#通过缓存的思想解决数据库操作频繁问题" class="headerlink" title="通过缓存的思想解决数据库操作频繁问题"></a>通过缓存的思想解决数据库操作频繁问题</h3><p>经常查询一些不太经常变化的数据就会很慢，所以可以利用缓存（在内存中的一块区域）。</p>
+<p>1、从缓存中获取数据：<br>    1）第一次没有数据：从数据库中查询获取数据 存到内存中，放入缓存，并从缓存中返回数据。<br>    2）第二次查询 就会很快 直接从缓存中返回数据。</p>
+<p>2、只运行在一台机器中的缓存中，这样就没办法被所有计算机读取，并且JVM的内存有限。所以需要Redis，这可能会独立运行在一部特殊的机器，供其他计算机访问。</p>
+<p>1.3 什么是Redis<br>    Redis是用C语言开发的一个开源的高性能键值对（key-value）数据库，官方提供测试数据，50个并发执行100000个请求,读的速度是110000次/s,写的速度是81000次/s ，且Redis通过提供多种键值数据类型来适应不同场景下的存储需求，目前为止Redis支持的键值数据类型如下：<br>        1) 字符串类型 string<br>        2) 哈希类型 hash<br>        3) 列表类型 list<br>        4) 集合类型 set<br>        5) 有序集合类型 sortedset</p>
+<p>redis的应用场景<br>        •    缓存（数据查询、短连接、新闻内容、商品内容等等）<br>        •    聊天室的在线好友列表<br>        •    任务队列。（秒杀、抢购、12306等等）<br>        •    应用排行榜<br>        •    网站访问统计<br>        •    数据过期处理（可以精确到毫秒<br>        •    分布式集群架构中的session分离</p>
+<h2 id="redis-部署与安装"><a href="#redis-部署与安装" class="headerlink" title="redis 部署与安装"></a>redis 部署与安装</h2><ol>
+<li>官网：<a href="https://redis.io" target="_blank" rel="noopener">https://redis.io</a></li>
+<li>中文网：<a href="http://www.redis.net.cn/" target="_blank" rel="noopener">http://www.redis.net.cn/</a></li>
+<li>解压直接可以使用：<ul>
+<li>redis.windows.conf：配置文件</li>
+<li>redis-cli.exe：redis的客户端</li>
+<li>redis-server.exe：redis服务器端</li>
+</ul>
+</li>
+</ol>
+<h3 id="Redis-需要打开server"><a href="#Redis-需要打开server" class="headerlink" title="Redis 需要打开server"></a>Redis 需要打开server</h3><p>打开文件夹，内容如下：</p>
+<p><img src="https://www.runoob.com/wp-content/uploads/2014/11/C2CEBAA0-30B9-4340-8D23-78F6FEB8CBE2.png%22" alt="img"></p>
+<p>打开一个 <strong>cmd</strong> 窗口 使用 cd 命令切换目录到 <strong>C:\redis</strong> 运行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-server.exe redis.windows.conf</span><br></pre></td></tr></table></figure>
+
+<p>如果想方便的话，可以把 redis 的路径加到系统的环境变量里，这样就省得再输路径了，后面的那个 redis.windows.conf 可以省略，如果省略，会启用默认的。输入之后，会显示如下界面：</p>
+<p><img src="https://www.runoob.com/wp-content/uploads/2014/11/redis-install1.png" alt="Redis 安装"></p>
+<p>这时候另启一个 cmd 窗口，原来的不要关闭，不然就无法访问服务端了。</p>
+<p>切换到 redis 目录下运行:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis-cli.exe -h 127.0.0.1 -p 6379</span><br></pre></td></tr></table></figure>
+
+<p>设置键值对:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set myKey abc</span><br></pre></td></tr></table></figure>
+
+<p>取出键值对:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">get myKey</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://www.runoob.com/wp-content/uploads/2014/11/redis-install2.jpg" alt="Redis 安装"></p>
+<h3 id="配置redis-环境变量-新建到path中"><a href="#配置redis-环境变量-新建到path中" class="headerlink" title="配置redis 环境变量 新建到path中"></a>配置redis 环境变量 新建到path中</h3><p>三、配置redis环境变量,把redis路径配置到系统变量的path值中，如图：</p>
+<p><img src="https://img-blog.csdn.net/2018060918221379?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MjQyMzgxOQ==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="配置环境变量"></p>
+<h3 id="在打开cli-exe-之前-首先打开-redis-server-exe"><a href="#在打开cli-exe-之前-首先打开-redis-server-exe" class="headerlink" title="在打开cli.exe 之前 首先打开 redis-server.exe"></a>在打开cli.exe 之前 首先打开 redis-server.exe</h3><p>四、打开一个cmd窗口，执行redis-server.exe就可以启动redis了，因为执行redis-server.exe redis.windows.conf。</p>
+<p><img src="https://img-blog.csdn.net/20180609182832437?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80MjQyMzgxOQ==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt></p>
+<h4 id="另开一个cmd-打开redis-cli-exe-h-127-0-0-1-p-6379"><a href="#另开一个cmd-打开redis-cli-exe-h-127-0-0-1-p-6379" class="headerlink" title="另开一个cmd 打开redis-cli.exe -h 127.0.0.1 -p 6379"></a>另开一个cmd 打开redis-cli.exe -h 127.0.0.1 -p 6379</h4><p>设置键值对 set redisdemo 12345</p>
+<p>取出键值对 get redisdemo</p>
+<h4 id="默认本机host-port6379"><a href="#默认本机host-port6379" class="headerlink" title="默认本机host port6379"></a>默认本机host port6379</h4><h2 id="redis持久化-保存到硬盘中"><a href="#redis持久化-保存到硬盘中" class="headerlink" title="redis持久化 保存到硬盘中"></a>redis持久化 保存到硬盘中</h2><h3 id="持久化"><a href="#持久化" class="headerlink" title="持久化"></a>持久化</h3><p>redis是一个内存数据库，当redis服务器重启，获取电脑重启，数据会丢失，我们可以将redis内存中的数据持久化保存到硬盘的文件中。</p>
+<h3 id="redis持久化机制：-redis-存储的是经常不变动的数据，所以当出现超过一定阈值的key改变-就需要持久化了"><a href="#redis持久化机制：-redis-存储的是经常不变动的数据，所以当出现超过一定阈值的key改变-就需要持久化了" class="headerlink" title="redis持久化机制：(redis)存储的是经常不变动的数据，所以当出现超过一定阈值的key改变 就需要持久化了"></a>redis持久化机制：(redis)存储的是经常不变动的数据，所以当出现超过一定阈值的key改变 就需要持久化了</h3><h3 id="RDB：默认方式，不需要进行配置，默认就使用这种机制-保存在rdb文件中"><a href="#RDB：默认方式，不需要进行配置，默认就使用这种机制-保存在rdb文件中" class="headerlink" title="RDB：默认方式，不需要进行配置，默认就使用这种机制 保存在rdb文件中"></a>RDB：默认方式，不需要进行配置，默认就使用这种机制 保存在rdb文件中</h3><ul>
+<li>在一定的间隔时间中，检测key的变化情况，然后持久化数据</li>
+</ul>
+<ol>
+<li><p>编辑redis.windwos.conf文件</p>
+<p>// after 900 sec (15 min) if at least 1 key changed</p>
+<p>save 900 1</p>
+<p>//after 300 sec (5 min) if at least 10 keys changed</p>
+<p>save 300 10</p>
+<p>// after 60 sec if at least 10000 keys changed</p>
+<p>save 60 10000</p>
+</li>
+</ol>
+   <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">################################ SNAPSHOTTING  #################################</span><br><span class="line">#</span><br><span class="line"># Save the DB on disk:</span><br><span class="line">#</span><br><span class="line">#   save &lt;seconds&gt; &lt;changes&gt;</span><br><span class="line">#</span><br><span class="line">#   Will save the DB if both the given number of seconds and the given</span><br><span class="line">#   number of write operations against the DB occurred.</span><br><span class="line">#</span><br><span class="line">#   In the example below the behaviour will be to save:</span><br><span class="line">#   after 900 sec (15 min) if at least 1 key changed</span><br><span class="line">#   after 300 sec (5 min) if at least 10 keys changed</span><br><span class="line">#   after 60 sec if at least 10000 keys changed</span><br><span class="line">#</span><br><span class="line">#   Note: you can disable saving at all commenting all the &quot;save&quot; lines.</span><br><span class="line">#</span><br><span class="line">#   It is also possible to remove all the previously configured save</span><br><span class="line">#   points by adding a save directive with a single empty string argument</span><br><span class="line">#   like in the following example:</span><br><span class="line">#</span><br><span class="line">#   save &quot;&quot;</span><br><span class="line"></span><br><span class="line">save 900 1</span><br><span class="line">save 300 10</span><br><span class="line">save 60  10000</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li><p>重新启动redis服务器，并指定配置文件名称<br>D:\JavaWeb2018\day23_redis\资料\redis\windows-64\redis-2.8.9&gt;redis-server.exe redis.windows.conf    </p>
+<p>需要指定redis.windows.conf 才会配置成功，同时保存后马上持久化生成一个dump.rdb </p>
+</li>
+</ol>
+<p><img src="images/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20200421164126.png" alt="微信截图_20200421164126"></p>
+<p><img src="images/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20200421164137.png" alt="微信截图_20200421164137"></p>
+<h3 id="持久化-关掉服务器之后-下次登录还可以读取"><a href="#持久化-关掉服务器之后-下次登录还可以读取" class="headerlink" title="持久化- 关掉服务器之后 下次登录还可以读取"></a>持久化- 关掉服务器之后 下次登录还可以读取</h3><p><img src="images/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20200421164512.png" alt="微信截图_20200421164512"></p>
+<p>修改之后接的复原 并且配置</p>
+<h3 id="AOF：日志记录的方式，可以记录每一条命令的操作。可以每一次命令操作后，持久化数据。-但是效率极低"><a href="#AOF：日志记录的方式，可以记录每一条命令的操作。可以每一次命令操作后，持久化数据。-但是效率极低" class="headerlink" title="AOF：日志记录的方式，可以记录每一条命令的操作。可以每一次命令操作后，持久化数据。 但是效率极低"></a>AOF：日志记录的方式，可以记录每一条命令的操作。可以每一次命令操作后，持久化数据。 但是效率极低</h3><p><img src="/2020/05/14/redis/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20200421164833.png" alt="微信截图_20200421164833"></p>
+<ol>
+<li><p>编辑redis.windwos.conf文件<br>appendonly no（关闭aof） –&gt; appendonly yes （开启aof）</p>
+<p>appendfsync always ： 每一次操作都进行持久化</p>
+<p>appendfsync everysec ： 每隔一秒进行一次持久化</p>
+<p>appendfsync no     ： 不进行持久化</p>
+</li>
+</ol>
+<h2 id="redis-命令操作"><a href="#redis-命令操作" class="headerlink" title="redis 命令操作"></a>redis 命令操作</h2><h3 id="redis的5种数据结构（针对值-而非针对键）："><a href="#redis的5种数据结构（针对值-而非针对键）：" class="headerlink" title="redis的5种数据结构（针对值 而非针对键）："></a>redis的5种数据结构（针对值 而非针对键）：</h3><ul>
+<li><p>redis存储的是：key,value格式的数据，其中key都是字符串，value有5种不同的数据结构</p>
+</li>
+<li><p>value的数据结构：<br>1) 字符串类型 string<br>2) 哈希类型 hash ： map格式<br>3) 列表类型 list ： linkedlist格式。支持重复元素<br>4) 集合类型 set  ： 数据无序，不允许重复元素<br>5) 有序集合类型 sortedset：不允许重复元素，且元素有顺序</p>
+</li>
+</ul>
+<p><img src="images/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20200421152032.png" alt="微信截图_20200421152032"></p>
+<h3 id="字符串类型-string-set-get-del"><a href="#字符串类型-string-set-get-del" class="headerlink" title="字符串类型 string        set get del"></a>字符串类型 string        set get del</h3><ol>
+<li>存储： set key value（会覆盖）<br>127.0.0.1:6379&gt; set username zhangsan<br>OK</li>
+<li>获取： get key<br>127.0.0.1:6379&gt; get username<br>“zhangsan”</li>
+<li>删除： del key<br>127.0.0.1:6379&gt; del age<br>(integer) 1</li>
+</ol>
+<h3 id="哈希类型-hash-map中存储多个键值对"><a href="#哈希类型-hash-map中存储多个键值对" class="headerlink" title="哈希类型 hash     map中存储多个键值对"></a>哈希类型 hash     map中存储多个键值对</h3><ol>
+<li><p>存储： hset key field value<br>127.0.0.1:6379&gt; hset myhash username lisi<br>(integer) 1<br>127.0.0.1:6379&gt; hset myhash password 123<br>(integer) 1</p>
+</li>
+<li><p>获取： </p>
+<ul>
+<li>hget key field: 获取指定的field对应的值<br>127.0.0.1:6379&gt; hget myhash username<br>“lisi”</li>
+<li>hgetall：获取该hash中所有的field和value<br>127.0.0.1:6379&gt; hgetall myhash<br>1) “username”<br>2) “lisi”<br>3) “password”<br>4) “123”</li>
+</ul>
+</li>
+<li><p>删除： hdel key field<br>127.0.0.1:6379&gt; hdel myhash username<br>(integer) 1</p>
+</li>
+</ol>
+<h3 id="列表类型-list-可以添加元素到列表的左边或者右边-双向链表"><a href="#列表类型-list-可以添加元素到列表的左边或者右边-双向链表" class="headerlink" title="列表类型 list:   可以添加元素到列表的左边或者右边 双向链表"></a>列表类型 list:   可以添加元素到列表的左边或者右边 双向链表</h3><ol>
+<li><p>添加：返回列表中的size</p>
+<ol>
+<li><p>lpush key value: 将元素加入列表左表</p>
+</li>
+<li><p>rpush key value：将元素加入列表右边</p>
+<p>// 添加第一个元素的同时 声明了myList这个列表</p>
+<p>127.0.0.1:6379&gt; lpush myList a<br>(integer) 1<br>127.0.0.1:6379&gt; lpush myList b<br>(integer) 2<br>127.0.0.1:6379&gt; rpush myList c<br>(integer) 3</p>
+</li>
+</ol>
+</li>
+<li><p>获取：</p>
+<ul>
+<li>lrange key start end ：范围获取<br>127.0.0.1:6379&gt; lrange myList 0 -1<br>(0到-1（python的最后一个 -1）获取所有)<br>1) “b”<br>2) “a”<br>3) “c”</li>
+</ul>
+</li>
+<li><p>删除：</p>
+<ul>
+<li>lpop key： 删除列表最左边的元素，并将元素返回</li>
+<li>rpop key： 删除列表最右边的元素，并将元素返回</li>
+</ul>
+</li>
+</ol>
+<h3 id="集合类型-set-：-不允许重复元素-取出顺序-和存储的结构有关"><a href="#集合类型-set-：-不允许重复元素-取出顺序-和存储的结构有关" class="headerlink" title="集合类型 set ： 不允许重复元素 取出顺序 和存储的结构有关"></a>集合类型 set ： 不允许重复元素 取出顺序 和存储的结构有关</h3><ol>
+<li><p>存储：<strong>sadd</strong> key value  返回set的size<br>127.0.0.1:6379&gt; sadd myset a</p>
+<pre><code>(integer) 1
+127.0.0.1:6379&gt; sadd myset a
+(integer) 0</code></pre></li>
+<li><p>获取：<strong>smembers</strong> key:获取set集合中所有元素<br>127.0.0.1:6379&gt; smembers myset<br>1) “a”</p>
+</li>
+<li><p>删除：<strong>srem</strong> key value:删除set集合中的某个元素<br>127.0.0.1:6379&gt; srem myset a<br>(integer) 1</p>
+</li>
+</ol>
+<h3 id="有序集合类型-sortedset：不允许重复元素，且元素有顺序"><a href="#有序集合类型-sortedset：不允许重复元素，且元素有顺序" class="headerlink" title="有序集合类型 sortedset：不允许重复元素，且元素有顺序."></a>有序集合类型 sortedset：不允许重复元素，且元素有顺序.</h3><p>每个元素都会<strong>关联一个double类型的分数</strong>。redis正是通过分数来为集合中的成员进行从小到大的排序。</p>
+<ol>
+<li><p>存储：<strong>zadd</strong> key score value<br>127.0.0.1:6379&gt; zadd mysort 60 zhangsan</p>
+<pre><code>(integer) 1
+127.0.0.1:6379&gt; zadd mysort 50 lisi
+(integer) 1
+127.0.0.1:6379&gt; zadd mysort 80 wangwu
+(integer) 1</code></pre></li>
+<li><p>获取：<strong>zrange</strong> key start end [withscores]<br>127.0.0.1:6379&gt; zrange mysort 0 -1</p>
+<pre><code>1) &quot;lisi&quot;
+2) &quot;zhangsan&quot;
+3) &quot;wangwu&quot;</code></pre><p>​    127.0.0.1:6379&gt; <strong>zrange mysort 0 -1 withscores</strong><br>​    1) “zhangsan”<br>​    2) “60”<br>​    3) “wangwu”<br>​    4) “80”<br>​    5) “lisi”<br>​    6) “500”</p>
+</li>
+</ol>
+<h2 id="通用命令"><a href="#通用命令" class="headerlink" title="通用命令"></a>通用命令</h2><p>1、keys *</p>
+<p>2、type  key  获取value的类型</p>
+<p>3、del key 直接删掉这个key</p>
+<h2 id="Java客户端-Jedis"><a href="#Java客户端-Jedis" class="headerlink" title="Java客户端 Jedis"></a>Java客户端 Jedis</h2><p>Jedis: 一款java操作redis数据库的工具.    </p>
+<ul>
+<li><p>使用步骤：</p>
+<ol>
+<li>下载jedis的jar包<ol start="2">
+<li>使用<br>//1. 获取连接<pre><code>     Jedis jedis = new Jedis(&quot;localhost&quot;,6379);
+//2. 操作
+jedis.set(&quot;username&quot;,&quot;zhangsan&quot;);
+     //3. 关闭连接
+     jedis.close();</code></pre></li>
+</ol>
+</li>
+</ol>
+<ul>
+<li>Jedis操作各种redis中的数据结构<br>​            1) 字符串类型 string<br>​                set<br>​                get</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//1. 获取连接</span></span><br><span class="line">   Jedis jedis = <span class="keyword">new</span> Jedis();<span class="comment">//如果使用空参构造，默认值 "localhost",6379端口</span></span><br><span class="line">     <span class="comment">//2. 操作</span></span><br><span class="line">     <span class="comment">//存储</span></span><br><span class="line">     jedis.set(<span class="string">"username"</span>,<span class="string">"zhangsan"</span>);</span><br><span class="line">     <span class="comment">//获取</span></span><br><span class="line">     String username = jedis.get(<span class="string">"username"</span>);</span><br><span class="line">     System.out.println(username);</span><br><span class="line">	</span><br><span class="line">     <span class="comment">//可以使用setex()方法存储可以指定过期时间的 key value</span></span><br><span class="line">     jedis.setex(<span class="string">"activecode"</span>,<span class="number">20</span>,<span class="string">"hehe"</span>);<span class="comment">//将activecode：hehe键值对存入redis，并且20秒后自动删除该键值对</span></span><br><span class="line">	</span><br><span class="line">     <span class="comment">//3. 关闭连接</span></span><br><span class="line">     jedis.close();</span><br></pre></td></tr></table></figure>
+
+<p>​            2) 哈希类型 hash ： map格式  </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//				hset</span></span><br><span class="line">  			<span class="comment">//	hget</span></span><br><span class="line">  				<span class="comment">//hgetAll</span></span><br><span class="line">  				<span class="comment">//1. 获取连接</span></span><br><span class="line">  		      Jedis jedis = <span class="keyword">new</span> Jedis();<span class="comment">//如果使用空参构造，默认值 "localhost",6379端口</span></span><br><span class="line">  		        <span class="comment">//2. 操作</span></span><br><span class="line">  		        <span class="comment">// 存储hash</span></span><br><span class="line">  		        jedis.hset(<span class="string">"user"</span>,<span class="string">"name"</span>,<span class="string">"lisi"</span>);</span><br><span class="line">  		        jedis.hset(<span class="string">"user"</span>,<span class="string">"age"</span>,<span class="string">"23"</span>);</span><br><span class="line">  		        jedis.hset(<span class="string">"user"</span>,<span class="string">"gender"</span>,<span class="string">"female"</span>);</span><br><span class="line">  		</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取hash的所有map中的数据</span></span><br><span class="line">        Map&lt;String, String&gt; user = jedis.hgetAll(<span class="string">"user"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// keyset</span></span><br><span class="line">        Set&lt;String&gt; keySet = user.keySet();		        <span class="keyword">for</span> (String key : keySet) &#123;</span><br><span class="line">            <span class="comment">//获取value</span></span><br><span class="line">            String value = user.get(key);</span><br><span class="line">            System.out.println(key + <span class="string">":"</span> + value);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//3. 关闭连接</span></span><br><span class="line">        jedis.close();</span><br></pre></td></tr></table></figure>
+
+
+
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//3) 列表类型 list ： linkedlist格式。支持重复元素</span></span><br><span class="line">	<span class="comment">//lpush / rpush</span></span><br><span class="line">	<span class="comment">//lpop / rpop</span></span><br><span class="line">	<span class="comment">//lrange start end : 范围获取</span></span><br><span class="line">	</span><br><span class="line">	 <span class="comment">//1. 获取连接</span></span><br><span class="line">       Jedis jedis = <span class="keyword">new</span> Jedis();<span class="comment">//如果使用空参构造，默认值 "localhost",6379端口</span></span><br><span class="line">       <span class="comment">//2. 操作</span></span><br><span class="line">       <span class="comment">// list 存储</span></span><br><span class="line">       jedis.lpush(<span class="string">"mylist"</span>,<span class="string">"a"</span>,<span class="string">"b"</span>,<span class="string">"c"</span>);<span class="comment">//从左边存</span></span><br><span class="line">       jedis.rpush(<span class="string">"mylist"</span>,<span class="string">"a"</span>,<span class="string">"b"</span>,<span class="string">"c"</span>);<span class="comment">//从右边存</span></span><br><span class="line">	</span><br><span class="line">       <span class="comment">// list 范围获取</span></span><br><span class="line">       List&lt;String&gt; mylist = jedis.lrange(<span class="string">"mylist"</span>, <span class="number">0</span>, -<span class="number">1</span>);</span><br><span class="line">       System.out.println(mylist);</span><br><span class="line">       </span><br><span class="line">       <span class="comment">// list 弹出</span></span><br><span class="line">       String element1 = jedis.lpop(<span class="string">"mylist"</span>);<span class="comment">//c</span></span><br><span class="line">       System.out.println(element1);</span><br><span class="line">	</span><br><span class="line">       String element2 = jedis.rpop(<span class="string">"mylist"</span>);<span class="comment">//c</span></span><br><span class="line">       System.out.println(element2);</span><br><span class="line">	</span><br><span class="line">       <span class="comment">// list 范围获取</span></span><br><span class="line">       List&lt;String&gt; mylist2 = jedis.lrange(<span class="string">"mylist"</span>, <span class="number">0</span>, -<span class="number">1</span>);</span><br><span class="line">       System.out.println(mylist2);</span><br><span class="line">	</span><br><span class="line">       <span class="comment">//3. 关闭连接</span></span><br><span class="line">       jedis.close();</span><br></pre></td></tr></table></figure>
+
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//		4) 集合类型 set  ： 不允许重复元素</span></span><br><span class="line"><span class="comment">//			sadd</span></span><br><span class="line"><span class="comment">//			smembers:获取所有元素</span></span><br><span class="line"></span><br><span class="line">			<span class="comment">//1. 获取连接</span></span><br><span class="line">	        Jedis jedis = <span class="keyword">new</span> Jedis();<span class="comment">//如果使用空参构造，默认值 "localhost",6379端口</span></span><br><span class="line">	        <span class="comment">//2. 操作</span></span><br><span class="line">		        <span class="comment">// set 存储</span></span><br><span class="line">		        jedis.sadd(<span class="string">"myset"</span>,<span class="string">"java"</span>,<span class="string">"php"</span>,<span class="string">"c++"</span>);</span><br><span class="line">		</span><br><span class="line">		        <span class="comment">// set 获取</span></span><br><span class="line">		        Set&lt;String&gt; myset = jedis.smembers(<span class="string">"myset"</span>);</span><br><span class="line">		        System.out.println(myset);</span><br><span class="line">		</span><br><span class="line">		        <span class="comment">//3. 关闭连接</span></span><br><span class="line">		        jedis.close();</span><br></pre></td></tr></table></figure>
+
+<p>​        </p>
+<p>​            5) 有序集合类型 sortedset：不允许重复元素，且元素有顺序</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//zadd</span></span><br><span class="line">				<span class="comment">//zrange</span></span><br><span class="line">				<span class="comment">//1. 获取连接</span></span><br><span class="line">		        Jedis jedis = <span class="keyword">new</span> Jedis();<span class="comment">//如果使用空参构造，默认值 "localhost",6379端口</span></span><br><span class="line">		        <span class="comment">//2. 操作</span></span><br><span class="line">		        <span class="comment">// sortedset 存储</span></span><br><span class="line">		        jedis.zadd(<span class="string">"mysortedset"</span>,<span class="number">3</span>,<span class="string">"亚瑟"</span>);</span><br><span class="line">		        jedis.zadd(<span class="string">"mysortedset"</span>,<span class="number">30</span>,<span class="string">"后裔"</span>);</span><br><span class="line">		        jedis.zadd(<span class="string">"mysortedset"</span>,<span class="number">55</span>,<span class="string">"孙悟空"</span>);</span><br><span class="line">		</span><br><span class="line">		        <span class="comment">// sortedset 获取</span></span><br><span class="line">		        Set&lt;String&gt; mysortedset = jedis.zrange(<span class="string">"mysortedset"</span>, <span class="number">0</span>, -<span class="number">1</span>);</span><br><span class="line">		</span><br><span class="line"></span><br><span class="line">		        System.out.println(mysortedset);</span><br><span class="line"></span><br><span class="line">		        <span class="comment">//3. 关闭连接</span></span><br><span class="line">		        jedis.close();</span><br></pre></td></tr></table></figure>
+
+<h3 id="jedis连接池：-JedisPool"><a href="#jedis连接池：-JedisPool" class="headerlink" title="jedis连接池： JedisPool"></a>jedis连接池： JedisPool</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用：</span></span><br><span class="line"><span class="comment">//				1. 创建JedisPool连接池对象</span></span><br><span class="line"><span class="comment">//			2. 调用方法 getResource()方法获取Jedis连接</span></span><br><span class="line">					<span class="comment">//0.创建一个配置对象			        JedisPoolConfig config = new JedisPoolConfig();</span></span><br><span class="line">		        config.setMaxTotal(<span class="number">50</span>);</span><br><span class="line">			        config.setMaxIdle(<span class="number">10</span>);</span><br><span class="line">			</span><br><span class="line">			        <span class="comment">//1.创建Jedis连接池对象</span></span><br><span class="line">			        JedisPool jedisPool = <span class="keyword">new</span> JedisPool(config,<span class="string">"localhost"</span>,<span class="number">6379</span>);</span><br><span class="line">			</span><br><span class="line">			        <span class="comment">//2.获取连接</span></span><br><span class="line">			        Jedis jedis = jedisPool.getResource();</span><br><span class="line">			        <span class="comment">//3. 使用</span></span><br><span class="line">			        jedis.set(<span class="string">"hehe"</span>,<span class="string">"heihei"</span>);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">			</span><br><span class="line">			        <span class="comment">//4. 关闭 归还到连接池中</span></span><br><span class="line">			        jedis.close();</span><br></pre></td></tr></table></figure>
+
+<h3 id="JedisUtils"><a href="#JedisUtils" class="headerlink" title="JedisUtils"></a>JedisUtils</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">JedisUtils</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span>  <span class="keyword">static</span>  JedisPool jedisPool;</span><br><span class="line">    <span class="keyword">static</span> &#123;</span><br><span class="line">        InputStream inputStream = JedisUtils.class.getClassLoader().getResourceAsStream("jedis.properties");</span><br><span class="line">        Properties properties = <span class="keyword">new</span> Properties();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            properties.load(inputStream);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        String host = properties.getProperty(<span class="string">"host"</span>);</span><br><span class="line">        String portId = properties.getProperty(<span class="string">"port"</span>);</span><br><span class="line">        <span class="keyword">int</span> maxTotal = Integer.parseInt(properties.getProperty(<span class="string">"maxTotal"</span>));</span><br><span class="line">        <span class="keyword">int</span> maxIdle = Integer.parseInt(properties.getProperty(<span class="string">"maxIdle"</span>));</span><br><span class="line">        JedisPoolConfig jedisPoolConfig = <span class="keyword">new</span> JedisPoolConfig();</span><br><span class="line">        jedisPoolConfig.setMaxIdle(maxIdle);</span><br><span class="line">        jedisPoolConfig.setMaxTotal(maxTotal);</span><br><span class="line">        jedisPool =  <span class="keyword">new</span> JedisPool(jedisPoolConfig,host,Integer.parseInt(portId));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Jedis <span class="title">getConnection</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> jedisPool.getResource();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/13/JavaScript-Json%E4%B8%8EJava%E6%95%B0%E6%8D%AE%E4%BA%A4%E6%8D%A2/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -511,10 +758,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2020-05-11 11:55:06 / Modified: 14:55:46" itemprop="dateCreated datePublished" datetime="2020-05-11T11:55:06+08:00">2020-05-11</time>
+              <time title="Created: 2020-05-11 11:55:06" itemprop="dateCreated datePublished" datetime="2020-05-11T11:55:06+08:00">2020-05-11</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-05-13 16:44:27" itemprop="dateModified" datetime="2020-05-13T16:44:27+08:00">2020-05-13</time>
+              </span>
 
           
 
@@ -535,7 +788,7 @@
 <li><a href="http://git-scm.com/" target="_blank" rel="noopener">Git</a><br>配置Git可以查看Git提供的官方文档：<a href="https://git-scm.com/book/en/v2" target="_blank" rel="noopener">https://git-scm.com/book/en/v2</a></li>
 </ul>
 <h3 id="Node-js"><a href="#Node-js" class="headerlink" title="Node.js"></a>Node.js</h3><p>安装网址：<a href="https://nodejs.org/en/" target="_blank" rel="noopener">https://nodejs.org/en/</a> </p>
-<p><img src="./images/nodejs.png" alt="nodejs"></p>
+<p><img src="images/nodejs.png" alt="nodejs"></p>
 <p>推荐下载LTS版本，基本不会遇到什么配置问题。</p>
 <p>其中需要提醒的是，不要安装一个额外Node.js 支持，这个资源很大且资源服务器在国外，因此会导致下载会很慢。</p>
 <p><strong>在安装Node.js之后请记住安装nodejs的路径，以及nodejs包管理工具npm的路径。</strong></p>
@@ -605,7 +858,7 @@
 <li><p>运行如下命令（去主题的github页面找类似下面的命令）<br> <code>$ git clone https://github.com/SuperKieran/TKL.git themes/tkl</code><br> 命令中的后面的tkl为存储的目录名字，可以随便修改，所从git下载的主题 都会在themes文件夹下可以找到。</p>
 </li>
 </ol>
-<p><img src="./images/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20200511114658.png" alt="微信截图_20200511114658"></p>
+<p><img src="images/%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20200511114658.png" alt="微信截图_20200511114658"></p>
 <ol>
 <li>更新主题相关文件</li>
 </ol>
@@ -805,7 +1058,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-count">6</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
